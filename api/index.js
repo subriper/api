@@ -11,14 +11,19 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // تلاش برای پیدا کردن کلاس در هر کجای پکیج
+    // ۱. پیدا کردن روت اصلی پکیج
     const root = consumet.default || consumet;
     
-    // پیدا کردن Gogoanime: یا مستقیم در روت است، یا داخل ANIME
-    const GogoClass = root.Gogoanime || root.ANIME?.Gogoanime;
+    // ۲. پیدا کردن آبجکت ANIME
+    const animeProviders = root.ANIME || root.default?.ANIME;
+
+    // ۳. استخراج کلاس Gogoanime (با تست کردن هر دو حالت مستقیم و تودرتو)
+    const GogoClass = animeProviders?.Gogoanime || root.Gogoanime;
 
     if (!GogoClass) {
-      throw new Error("Gogoanime class not found in package");
+      // اگر باز هم پیدا نشد، تمام کلیدهای موجود را برگردان تا ببینیم کجاست
+      const available = Object.keys(animeProviders || {});
+      throw new Error(`Gogoanime not found. Available in ANIME: ${available.join(', ')}`);
     }
 
     const gogo = new GogoClass(); 
