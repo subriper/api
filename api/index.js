@@ -5,41 +5,34 @@ import { META } from '@consumet/extensions';
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
 
-const anilist = new META.Anilist();
-
+// ساخت اینستنس در داخل روت برای اطمینان از لود شدن کامل متدها
 fastify.get('/api/home', async (request, reply) => {
   try {
-    // تابعی کمکی برای اجرای ایمن متدها
-    const safeFetch = async (methodName, ...args) => {
-      if (typeof anilist[methodName] === 'function') {
-        const res = await anilist[methodName](...args);
-        return res.results || [];
-      }
-      return [];
-    };
+    const anilist = new META.Anilist();
 
-    // اجرای هوشمند متدها بر اساس نام‌های احتمالی در نسخه‌های مختلف Consumet
-    const [spotlight, trending, latest, topAiring] = await Promise.all([
-      safeFetch('fetchPopularAnime', 1, 10),
-      safeFetch('fetchTrendingAnime', 1, 10),
-      safeFetch('fetchRecentEpisodes', 1, 12),
-      // اگر fetchTopAiring نبود، دوباره از محبوب‌ها یا یک متد عمومی استفاده می‌کند
-      safeFetch('fetchTopAiring', 1, 10).then(res => res.length ? res : safeFetch('fetchAnilistTrending', 1, 10))
+    // تست برای دیدن اینکه آیا متدها لود شده‌اند یا خیر
+    if (typeof anilist.fetchTrendingAnime !== 'function') {
+        throw new Error("Library methods are missing after initialization.");
+    }
+
+    const [spotlight, trending, latest] = await Promise.all([
+      anilist.fetchPopularAnime(1, 10).catch(() => ({ results: [] })),
+      anilist.fetchTrendingAnime(1, 10).catch(() => ({ results: [] })),
+      anilist.fetchRecentEpisodes(1, 12).catch(() => ({ results: [] }))
     ]);
 
     return {
-      spotlight,
-      trending,
-      latestEpisodes: latest,
-      topAiring: topAiring.length ? topAiring : spotlight // Fallback به spotlight اگر خالی بود
+      spotlight: spotlight.results || [],
+      trending: trending.results || [],
+      latestEpisodes: latest.results || [],
+      topAiring: trending.results || [] // فالبک به ترندینگ
     };
+
   } catch (err) {
-    // اگر باز هم خطای عجیبی داد، متدهای در دسترس را لیست کن تا ببینیم اسمش چیست
-    const availableMethods = Object.getOwnPropertyNames(Object.getPrototypeOf(anilist));
     return reply.status(500).send({ 
-      error: "Method Mapping Error", 
+      error: "Initialization Error", 
       details: err.message,
-      available: availableMethods 
+      hint: "Try updating @consumet/extensions to the latest version in package.json"
     });
   }
 });
