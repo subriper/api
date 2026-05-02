@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import * as consumet from '@consumet/extensions';
+import { ANIME } from '@consumet/extensions';
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
@@ -11,23 +11,12 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // ۱. پیدا کردن روت اصلی پکیج
-    const root = consumet.default || consumet;
+    // چون Gogoanime در لیست شما نبود، از Hianime استفاده می‌کنیم که عالی است
+    const animeProvider = new ANIME.Hianime(); 
     
-    // ۲. پیدا کردن آبجکت ANIME
-    const animeProviders = root.ANIME || root.default?.ANIME;
-
-    // ۳. استخراج کلاس Gogoanime (با تست کردن هر دو حالت مستقیم و تودرتو)
-    const GogoClass = animeProviders?.Gogoanime || root.Gogoanime;
-
-    if (!GogoClass) {
-      // اگر باز هم پیدا نشد، تمام کلیدهای موجود را برگردان تا ببینیم کجاست
-      const available = Object.keys(animeProviders || {});
-      throw new Error(`Gogoanime not found. Available in ANIME: ${available.join(', ')}`);
-    }
-
-    const gogo = new GogoClass(); 
-    const res = await gogo.fetchTopAiring();
+    // متد گرفتن انیمه‌های در حال پخش در Hianime
+    const res = await animeProvider.fetchTrendingAnime(); 
+    
     return res;
   } catch (err) {
     return reply.status(500).send({ 
