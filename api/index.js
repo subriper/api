@@ -11,19 +11,19 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    const animeProvider = new ANIME.AnimePahe(); 
+    // استفاده از Hianime که در لیست موجودی‌هایت بود و پایدار است
+    const animeProvider = new ANIME.Hianime(); 
     
-    // متد search در تمام پرووایدرها مشترک است
-    const res = await animeProvider.search("One Piece"); 
+    // استفاده از متدی که در مرحله قبل شناسایی کردیم
+    const res = await animeProvider.fetchRecentEpisodes(); 
     
     return res;
   } catch (err) {
-    // اگر باز هم ارور داد، لیست تمام متدهای در دسترس این کلاس را چاپ می‌کنیم
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(new ANIME.AnimePahe()));
+    // اگر باز هم به مشکل شبکه خورد، یکی دیگر از پرووایدرهای لیستت را امتحان می‌کنیم
     return reply.status(500).send({ 
-      error: 'Fetch Error',
+      error: 'API Connection Error',
       details: err.message,
-      availableMethods: methods // اینجا لیست تمام کارهایی که این کلاس می‌تواند انجام دهد را می‌بینیم
+      suggestion: "If this persists, the provider site might be down."
     });
   }
 });
