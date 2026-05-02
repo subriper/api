@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-// مستقیم کلاس گگو-انیمه را بیرون می‌کشیم
-import { Gogoanime } from '@consumet/extensions';
+import * as consumet from '@consumet/extensions';
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
@@ -12,16 +11,23 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // چون مستقیم ایمپورت شده، دیگر نیازی به ANIME. نیست
-    const gogo = new Gogoanime(); 
+    // تلاش برای پیدا کردن کلاس در هر کجای پکیج
+    const root = consumet.default || consumet;
+    
+    // پیدا کردن Gogoanime: یا مستقیم در روت است، یا داخل ANIME
+    const GogoClass = root.Gogoanime || root.ANIME?.Gogoanime;
+
+    if (!GogoClass) {
+      throw new Error("Gogoanime class not found in package");
+    }
+
+    const gogo = new GogoClass(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
     return reply.status(500).send({ 
       error: 'Fetch Error',
-      details: err.message,
-      // اگر باز هم ارور داد، ببینیم خود Gogoanime چیست
-      typeOfGogo: typeof Gogoanime 
+      details: err.message
     });
   }
 });
