@@ -1,8 +1,11 @@
-const fastify = require('fastify')({ logger: true });
-// وارد کردن مستقیم کلاس Gogoanime از داخل پوشه توزیع پکیج
-const { Gogoanime } = require('@consumet/extensions/dist/providers/anime/gogoanime');
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import { ANIME } from '@consumet/extensions';
 
-fastify.register(require('@fastify/cors'), { origin: '*' });
+const fastify = Fastify({ logger: true });
+
+// ثبت کورس
+await fastify.register(cors, { origin: '*' });
 
 fastify.get('/', async () => {
   return { message: 'API is running! 🚀' };
@@ -10,20 +13,20 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // حالا مستقیم از کلاسی که بالا گرفتیم استفاده می‌کنیم
-    const gogo = new Gogoanime(); 
+    // در سیستم جدید فراخوانی به این شکل است
+    const gogo = new ANIME.Gogoanime(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
-    fastify.log.error(err);
-    reply.status(500).send({ 
-      error: 'Failed to fetch data from Gogoanime',
+    return reply.status(500).send({ 
+      error: 'Fetch Error',
       details: err.message 
     });
   }
 });
 
-module.exports = async (req, res) => {
+// اکسپورت مخصوص ورسل
+export default async (req, res) => {
   await fastify.ready();
   fastify.server.emit('request', req, res);
 }
