@@ -11,17 +11,18 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // چون Gogoanime در لیست شما نبود، از Hianime استفاده می‌کنیم که عالی است
-    const animeProvider = new ANIME.Hianime(); 
+    // استفاده از AnimePahe که در لیست موجودی‌های شما بود
+    const animeProvider = new ANIME.AnimePahe(); 
     
-    // متد گرفتن انیمه‌های در حال پخش در Hianime
-    const res = await animeProvider.fetchTrendingAnime(); 
+    // متد استاندارد برای این پرووایدر
+    const res = await animeProvider.fetchLatestAnime(); 
     
     return res;
   } catch (err) {
     return reply.status(500).send({ 
       error: 'Fetch Error',
-      details: err.message
+      details: err.message,
+      note: "If fetchLatestAnime failed, trying to list available methods might help."
     });
   }
 });
