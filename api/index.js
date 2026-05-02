@@ -11,18 +11,19 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // استفاده از AnimePahe که در لیست موجودی‌های شما بود
     const animeProvider = new ANIME.AnimePahe(); 
     
-    // متد استاندارد برای این پرووایدر
-    const res = await animeProvider.fetchLatestAnime(); 
+    // متد search در تمام پرووایدرها مشترک است
+    const res = await animeProvider.search("One Piece"); 
     
     return res;
   } catch (err) {
+    // اگر باز هم ارور داد، لیست تمام متدهای در دسترس این کلاس را چاپ می‌کنیم
+    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(new ANIME.AnimePahe()));
     return reply.status(500).send({ 
       error: 'Fetch Error',
       details: err.message,
-      note: "If fetchLatestAnime failed, trying to list available methods might help."
+      availableMethods: methods // اینجا لیست تمام کارهایی که این کلاس می‌تواند انجام دهد را می‌بینیم
     });
   }
 });
