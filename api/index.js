@@ -1,5 +1,6 @@
 const fastify = require('fastify')({ logger: true });
-const consumet = require('@consumet/extensions');
+// وارد کردن مستقیم کلاس Gogoanime از داخل پوشه توزیع پکیج
+const { Gogoanime } = require('@consumet/extensions/dist/providers/anime');
 
 fastify.register(require('@fastify/cors'), { origin: '*' });
 
@@ -9,20 +10,14 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // تست کردن مسیرهای مختلف لود شدن پکیج
-    const ANIME = consumet.ANIME || consumet.default?.ANIME;
-    
-    if (!ANIME) {
-      throw new Error("Could not find ANIME providers in package");
-    }
-
-    const gogo = new ANIME.Gogoanime(); 
+    // حالا مستقیم از کلاسی که بالا گرفتیم استفاده می‌کنیم
+    const gogo = new Gogoanime(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
     fastify.log.error(err);
     reply.status(500).send({ 
-      error: 'Failed to fetch data',
+      error: 'Failed to fetch data from Gogoanime',
       details: err.message 
     });
   }
