@@ -1,0 +1,13 @@
+{
+  "name": "my-anime-api",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "dependencies": {
+    "@consumet/extensions": "^1.5.2",
+    "fastify": "^4.26.0",
+    "@fastify/cors": "^9.0.1"
+  }
+}
