@@ -12,7 +12,7 @@ fastify.get('/', async () => {
 fastify.get('/trending', async (request, reply) => {
   try {
     // در نسخه جدید باید مستقیماً از کلاس استفاده کرد
-    const gogo = new ANIME.Gogoanime(); 
+    const gogo = new ANIME.default.Gogoanime();
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
