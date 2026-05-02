@@ -8,18 +8,23 @@ fastify.get('/', async () => {
   return { message: 'API is running! 🚀' };
 });
 
-// گرفتن انیمه‌های محبوب از Gogoanime
+// گرفتن انیمه‌های محبوب
 fastify.get('/trending', async (request, reply) => {
-  const gogo = new ANIME.Gogoanime();
   try {
+    // در نسخه جدید باید مستقیماً از کلاس استفاده کرد
+    const gogo = new ANIME.Gogoanime(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
-    reply.status(500).send({ error: 'Failed to fetch data' });
+    fastify.log.error(err);
+    reply.status(500).send({ 
+      error: 'Failed to fetch data',
+      details: err.message 
+    });
   }
 });
 
-// اکسپورت مخصوص ورسل
+// اکسپورت برای ورسل
 module.exports = async (req, res) => {
   await fastify.ready();
   fastify.server.emit('request', req, res);
