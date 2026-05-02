@@ -1,10 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { ANIME } from '@consumet/extensions';
+// وارد کردن مستقیم کلاس از مسیر دقیق پکیج
+import { Gogoanime } from '@consumet/extensions/dist/providers/anime/gogoanime.js';
 
 const fastify = Fastify({ logger: true });
 
-// ثبت کورس
 await fastify.register(cors, { origin: '*' });
 
 fastify.get('/', async () => {
@@ -13,8 +13,8 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // در سیستم جدید فراخوانی به این شکل است
-    const gogo = new ANIME.Gogoanime(); 
+    // حالا مستقیم از کلاسی که ایمپورت کردیم استفاده می‌کنیم
+    const gogo = new Gogoanime(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
@@ -25,7 +25,6 @@ fastify.get('/trending', async (request, reply) => {
   }
 });
 
-// اکسپورت مخصوص ورسل
 export default async (req, res) => {
   await fastify.ready();
   fastify.server.emit('request', req, res);
