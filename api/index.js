@@ -11,19 +11,24 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // استفاده از Hianime که در لیست موجودی‌هایت بود و پایدار است
-    const animeProvider = new ANIME.Hianime(); 
+    // استفاده از AnimeSama که در لیستت بود و معمولاً پایدار است
+    const provider = new ANIME.AnimeSama(); 
     
-    // استفاده از متدی که در مرحله قبل شناسایی کردیم
-    const res = await animeProvider.fetchRecentEpisodes(); 
-    
-    return res;
+    // اکثر پرووایدرهای این لیست از متد search پشتیبانی قطعی دارند
+    // اول با یک سرچ تست می‌کنیم که ببینیم سایت بالاست یا نه
+    const res = await provider.search("Naruto");
+
+    return {
+      status: "Success",
+      provider: "AnimeSama",
+      results: res
+    };
+
   } catch (err) {
-    // اگر باز هم به مشکل شبکه خورد، یکی دیگر از پرووایدرهای لیستت را امتحان می‌کنیم
     return reply.status(500).send({ 
-      error: 'API Connection Error',
+      error: 'Source Blocked or Down',
       details: err.message,
-      suggestion: "If this persists, the provider site might be down."
+      suggestion: "Try switching to 'AnimeUnity' or 'AnimePahe' in the code."
     });
   }
 });
