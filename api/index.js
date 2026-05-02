@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-// وارد کردن مستقیم کلاس از مسیر دقیق پکیج
-import { Gogoanime } from '@consumet/extensions/dist/providers/anime/gogoanime.js';
+import * as consumet from '@consumet/extensions';
 
 const fastify = Fastify({ logger: true });
 
@@ -13,8 +12,14 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // حالا مستقیم از کلاسی که ایمپورت کردیم استفاده می‌کنیم
-    const gogo = new Gogoanime(); 
+    // پیدا کردن کلاس Gogoanime به هر شکلی که صادر شده باشد
+    const ANIME = consumet.ANIME || consumet.default?.ANIME;
+    
+    if (!ANIME || !ANIME.Gogoanime) {
+      throw new Error("Provider Gogoanime not found in package structure");
+    }
+
+    const gogo = new ANIME.Gogoanime(); 
     const res = await gogo.fetchTopAiring();
     return res;
   } catch (err) {
