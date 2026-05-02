@@ -9,34 +9,40 @@ const anilist = new META.Anilist();
 
 fastify.get('/api/home', async (request, reply) => {
   try {
-    // استفاده از Promise.allSettled به جای Promise.all 
-    // تا اگر یک منبع خراب بود، بقیه بخش‌ها لود شوند
-    const results = await Promise.allSettled([
-      anilist.fetchPopularAnime(1, 10),
-      anilist.fetchTrendingAnime(1, 10),
-      anilist.fetchRecentEpisodes(1, 12),
-      anilist.fetchTopAiring(1, 10) // نام اصلاح شده متد
-    ]);
+    // تابعی کمکی برای اجرای ایمن متدها
+    const safeFetch = async (methodName, ...args) => {
+      if (typeof anilist[methodName] === 'function') {
+        const res = await anilist[methodName](...args);
+        return res.results || [];
+      }
+      return [];
+    };
 
-    const [spotlight, trending, latest, topAiring] = results.map(res => 
-      res.status === 'fulfilled' ? res.value.results : []
-    );
+    // اجرای هوشمند متدها بر اساس نام‌های احتمالی در نسخه‌های مختلف Consumet
+    const [spotlight, trending, latest, topAiring] = await Promise.all([
+      safeFetch('fetchPopularAnime', 1, 10),
+      safeFetch('fetchTrendingAnime', 1, 10),
+      safeFetch('fetchRecentEpisodes', 1, 12),
+      // اگر fetchTopAiring نبود، دوباره از محبوب‌ها یا یک متد عمومی استفاده می‌کند
+      safeFetch('fetchTopAiring', 1, 10).then(res => res.length ? res : safeFetch('fetchAnilistTrending', 1, 10))
+    ]);
 
     return {
       spotlight,
       trending,
       latestEpisodes: latest,
-      topAiring
+      topAiring: topAiring.length ? topAiring : spotlight // Fallback به spotlight اگر خالی بود
     };
   } catch (err) {
+    // اگر باز هم خطای عجیبی داد، متدهای در دسترس را لیست کن تا ببینیم اسمش چیست
+    const availableMethods = Object.getOwnPropertyNames(Object.getPrototypeOf(anilist));
     return reply.status(500).send({ 
-      error: "Failed to fetch home data", 
-      details: err.message 
+      error: "Method Mapping Error", 
+      details: err.message,
+      available: availableMethods 
     });
   }
 });
-
-// روت‌های قبلی (info, search, watch) را هم در ادامه اضافه کن...
 
 export default async (req, res) => {
   await fastify.ready();
