@@ -1,6 +1,6 @@
 const fastify = require('fastify')({ logger: true });
 // وارد کردن مستقیم کلاس Gogoanime از داخل پوشه توزیع پکیج
-const { Gogoanime } = require('@consumet/extensions/dist/providers/anime');
+const { Gogoanime } = require('@consumet/extensions/dist/providers/anime/gogoanime');
 
 fastify.register(require('@fastify/cors'), { origin: '*' });
 
