@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { ANIME } from '@consumet/extensions';
+import { META } from '@consumet/extensions';
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
@@ -11,24 +11,17 @@ fastify.get('/', async () => {
 
 fastify.get('/trending', async (request, reply) => {
   try {
-    // استفاده از AnimeSama که در لیستت بود و معمولاً پایدار است
-    const provider = new ANIME.AnimeSama(); 
+    // استفاده از Anilist که دیتای بسیار دقیق و پایداری دارد
+    const anilist = new META.Anilist(); 
     
-    // اکثر پرووایدرهای این لیست از متد search پشتیبانی قطعی دارند
-    // اول با یک سرچ تست می‌کنیم که ببینیم سایت بالاست یا نه
-    const res = await provider.search("Naruto");
-
-    return {
-      status: "Success",
-      provider: "AnimeSama",
-      results: res
-    };
-
+    // گرفتن لیست انیمه‌های ترند روز دنیا
+    const res = await anilist.fetchTrendingAnime(1, 10); 
+    
+    return res;
   } catch (err) {
     return reply.status(500).send({ 
-      error: 'Source Blocked or Down',
-      details: err.message,
-      suggestion: "Try switching to 'AnimeUnity' or 'AnimePahe' in the code."
+      error: 'Metadata Fetch Error',
+      details: err.message
     });
   }
 });
