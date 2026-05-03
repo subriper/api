@@ -1,39 +1,42 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { META } from '@consumet/extensions';
+import { META, ANIME } from '@consumet/extensions';
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: '*' });
 
-// ساخت اینستنس در داخل روت برای اطمینان از لود شدن کامل متدها
+const anilist = new META.Anilist();
+const zoro = new ANIME.Zoro(); // اضافه کردن پرووایدر اختصاصی زورو
+
 fastify.get('/api/home', async (request, reply) => {
   try {
-    const anilist = new META.Anilist();
-
-    // تست برای دیدن اینکه آیا متدها لود شده‌اند یا خیر
-    if (typeof anilist.fetchTrendingAnime !== 'function') {
-        throw new Error("Library methods are missing after initialization.");
-    }
-
-    const [spotlight, trending, latest] = await Promise.all([
-      anilist.fetchPopularAnime(1, 10).catch(() => ({ results: [] })),
-      anilist.fetchTrendingAnime(1, 10).catch(() => ({ results: [] })),
-      anilist.fetchRecentEpisodes(1, 12).catch(() => ({ results: [] }))
+    // منطق اصلی ریپازیتوری aniwatch-api: اولویت با دیتای زورو
+    const [zoroHome, trending] = await Promise.allSettled([
+      zoro.fetchHomePage(), // این متد دقیقاً دیتای صفحه اول زورو را می‌دهد
+      anilist.fetchTrendingAnime(1, 10)
     ]);
 
     return {
-      spotlight: spotlight.results || [],
-      trending: trending.results || [],
-      latestEpisodes: latest.results || [],
-      topAiring: trending.results || [] // فالبک به ترندینگ
+      // اگر دیتای اختصاصی زورو لود شد، از آن استفاده کن، در غیر این صورت فالبک به آنی‌لیست
+      spotlight: zoroHome.status === 'fulfilled' ? zoroHome.value.spotlight : [],
+      trending: trending.status === 'fulfilled' ? trending.value.results : [],
+      latestEpisodes: zoroHome.status === 'fulfilled' ? zoroHome.value.latestEpisodes : [],
+      topAiring: zoroHome.status === 'fulfilled' ? zoroHome.value.topAiring : []
     };
-
   } catch (err) {
-    return reply.status(500).send({ 
-      error: "Initialization Error", 
-      details: err.message,
-      hint: "Try updating @consumet/extensions to the latest version in package.json"
-    });
+    return reply.status(500).send({ error: err.message });
+  }
+});
+
+// روت اختصاصی برای گرفتن لینک پخش (مشابه منطق aniwatch-api)
+fastify.get('/api/watch/:episodeId', async (request, reply) => {
+  try {
+    const { episodeId } = request.params;
+    // زورو معمولاً چندین سرور (StreamSB, VidCloud) می‌دهد
+    const res = await zoro.fetchEpisodeSources(episodeId);
+    return res;
+  } catch (err) {
+    return reply.status(500).send({ error: "Servers are busy, try again." });
   }
 });
 
